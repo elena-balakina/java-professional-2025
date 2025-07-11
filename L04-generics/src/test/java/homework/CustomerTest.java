@@ -70,7 +70,6 @@ class CustomerTest {
         assertThat(smallestScore.getKey()).isEqualTo(customer2);
 
         // when
-        // подсказка:
         // a key-value mapping associated with the least key strictly greater than the given key, or
         // null if there is no such key.
         Map.Entry<Customer, String> middleScore = customerService.getNext(new Customer(10, "Key", 20));
