@@ -24,7 +24,9 @@ public class CustomerService {
     }
 
     private Map.Entry<Customer, String> copyEntry(Map.Entry<Customer, String> entry) {
-        if (entry == null) return null;
+        if (entry == null) {
+            return null;
+        }
         Customer original = entry.getKey();
         Customer copy = new Customer(original.getId(), original.getName(), original.getScores());
         return Map.entry(copy, entry.getValue());
