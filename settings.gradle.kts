@@ -1,4 +1,4 @@
-rootProject.name = "otusJava"
+rootProject.name = "java-professional-2025"
 include("L01-gradle")
 
 pluginManagement {
@@ -23,3 +23,4 @@ pluginManagement {
     }
 }
 include("L04-generics")
+include("L06-annotations")
