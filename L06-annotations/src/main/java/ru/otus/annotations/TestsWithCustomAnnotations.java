@@ -17,23 +17,23 @@ public class TestsWithCustomAnnotations {
     }
 
     @Test
-    public void test1Positive() {
-        System.out.println("Test 1 positive test");
+    public void test1() {
+        System.out.println("Test 1 passed");
     }
 
     @Test
-    public void test2Positive() {
-        System.out.println("Test 2 positive test");
+    public void test2() {
+        System.out.println("Test 2 passed");
     }
 
     @Test
-    public void test3Negative() {
-        System.out.println("Test 3 negative test");
+    public void test3() {
+        throw new RuntimeException("Test 3 failed");
     }
 
     @Test
-    public void test4Negative() {
-        System.out.println("Test 4 negative test");
+    public void test4() {
+        throw new RuntimeException("Test 4 failed");
     }
 
     @After
