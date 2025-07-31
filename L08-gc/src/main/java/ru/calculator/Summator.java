@@ -1,8 +1,8 @@
 package ru.calculator;
 
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class Summator {
     private int sum = 0;
@@ -13,12 +13,6 @@ public class Summator {
     // !!! эта коллекция должна остаться. Заменять ее на счетчик нельзя.
     private final List<Data> listValues = new ArrayList<>();
 
-    private final SecureRandom random;
-
-    public Summator(SecureRandom random) {
-        this.random = random;
-    }
-
     // !!! сигнатуру метода менять нельзя
     public void calc(Data data) {
         listValues.add(data);
@@ -27,7 +21,7 @@ public class Summator {
         }
 
         int value = data.getValue();
-        int rnd = random.nextInt();
+        int rnd = ThreadLocalRandom.current().nextInt();
 
         sum += value + rnd;
         sumLastThreeValues = value + prevValue + prevPrevValue;
