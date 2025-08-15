@@ -5,25 +5,25 @@ import java.util.*;
 public class MinBanknotesWithdrawalStrategy implements CashWithdrawalStrategy {
 
     @Override
-    public Map<Integer, Integer> withdraw(int amount, List<BanknoteCell> cells) {
+    public Map<Nominal, Integer> withdraw(int amount, List<BanknoteCell> cells) {
         // Сортируем ячейки по убыванию номинала, чтобы использовать крупные купюры первыми
         List<BanknoteCell> sortedCells = new ArrayList<>(cells);
-        sortedCells.sort(
-                Comparator.comparingInt(BanknoteCell::getBanknoteNominal).reversed());
+        sortedCells.sort(Comparator.comparingInt(BanknoteCell::getNominalValue).reversed());
 
-        Map<Integer, Integer> result = new LinkedHashMap<>();
+        Map<Nominal, Integer> result = new LinkedHashMap<>();
         int remaining = amount;
 
         for (BanknoteCell cell : sortedCells) {
-            int nominal = cell.getBanknoteNominal();
+            Nominal nominal = cell.getNominal();
+            int nominalValue = nominal.getValue();
             int availableCount = cell.getCount();
 
-            int needed = remaining / nominal;
+            int needed = remaining / nominalValue;
             int toUse = Math.min(needed, availableCount);
 
             if (toUse > 0) {
                 result.put(nominal, toUse);
-                remaining -= toUse * nominal;
+                remaining -= toUse * nominalValue;
             }
 
             if (remaining == 0) {

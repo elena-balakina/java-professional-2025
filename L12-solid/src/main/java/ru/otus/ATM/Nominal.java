@@ -1,6 +1,6 @@
 package ru.otus.ATM;
 
-public enum Banknote {
+public enum Nominal {
     RUB_100(100),
     RUB_500(500),
     RUB_1000(1000),
@@ -9,7 +9,7 @@ public enum Banknote {
 
     private final int value;
 
-    Banknote(int value) {
+    Nominal(int value) {
         this.value = value;
     }
 
@@ -17,8 +17,8 @@ public enum Banknote {
         return value;
     }
 
-    public static Banknote fromValue(int value) {
-        for (Banknote b : values()) {
+    public static Nominal fromValue(int value) {
+        for (Nominal b : values()) {
             if (b.getValue() == value) {
                 return b;
             }

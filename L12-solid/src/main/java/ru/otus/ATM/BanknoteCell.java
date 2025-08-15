@@ -2,20 +2,20 @@ package ru.otus.ATM;
 
 public class BanknoteCell {
 
-    private final Banknote banknote;
+    private final Nominal nominal;
     private int count;
 
-    public BanknoteCell(Banknote banknote) {
-        this.banknote = banknote;
+    public BanknoteCell(Nominal banknote) {
+        this.nominal = banknote;
         this.count = 0;
     }
 
-    public Banknote getBanknote() {
-        return banknote;
+    public Nominal getNominal() {
+        return nominal;
     }
 
-    public int getBanknoteNominal() {
-        return banknote.getValue();
+    public int getNominalValue() {
+        return nominal.getValue();
     }
 
     public int getCount() {
@@ -31,13 +31,13 @@ public class BanknoteCell {
 
     public void removeCount(int count) {
         if (count > this.count) {
-            throw new IllegalArgumentException("Not enough banknotes in cell for nominal: " + banknote.getValue());
+            throw new IllegalArgumentException("Not enough banknotes in cell for nominal: " + nominal.getValue());
         }
         this.count -= count;
     }
 
     @Override
     public String toString() {
-        return "Banknote cell{" + banknote.getValue() + "₽ x " + count + "}";
+        return "Banknote cell{" + nominal.getValue() + "₽ x " + count + "}";
     }
 }

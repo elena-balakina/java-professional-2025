@@ -16,11 +16,11 @@ public class AtmTest {
     @BeforeEach
     void setUp() {
         atm = new Atm(
-                List.of(Banknote.RUB_100, Banknote.RUB_500, Banknote.RUB_1000), new MinBanknotesWithdrawalStrategy());
+                List.of(Nominal.RUB_100, Nominal.RUB_500, Nominal.RUB_1000), new MinBanknotesWithdrawalStrategy());
 
-        atm.deposit(100, 10); // 1000
-        atm.deposit(500, 5); // 2500
-        atm.deposit(1000, 2); // 2000
+        atm.deposit(Nominal.RUB_100, 10); // 1000
+        atm.deposit(Nominal.RUB_500, 5); // 2500
+        atm.deposit(Nominal.RUB_1000, 2); // 2000
     }
 
     @Test
@@ -32,12 +32,12 @@ public class AtmTest {
     @Test
     @DisplayName("Successful withdrawal test")
     public void SuccessfulWithdrawalTest() {
-        Map<Integer, Integer> withdrawn = atm.withdraw(1600);
+        Map<Nominal, Integer> withdrawn = atm.withdraw(1600);
         // Ожидаем: 1 x 1000, 1 x 500, 1 x 100
         assertEquals(3, withdrawn.size());
-        assertEquals(1, withdrawn.get(1000));
-        assertEquals(1, withdrawn.get(500));
-        assertEquals(1, withdrawn.get(100));
+        assertEquals(1, withdrawn.get(Nominal.RUB_1000));
+        assertEquals(1, withdrawn.get(Nominal.RUB_500));
+        assertEquals(1, withdrawn.get(Nominal.RUB_100));
         assertEquals(3900, atm.getBalance()); // 5500 - 1600
     }
 
@@ -51,7 +51,7 @@ public class AtmTest {
     @Test
     @DisplayName("Impossible to add banknote with not existing nominal test")
     void impossibleNominalTest() {
-        Exception ex = assertThrows(IllegalArgumentException.class, () -> atm.deposit(5000, 1));
+        Exception ex = assertThrows(IllegalArgumentException.class, () -> atm.deposit(Nominal.RUB_5000, 1));
         assertEquals("Nomial : 5000 is unsupported by current ATM", ex.getMessage());
     }
 }

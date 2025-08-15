@@ -16,12 +16,12 @@ public class MinBanknotesWithdrawalStrategyTest {
         List<BanknoteCell> cells = List.of(with(1000, 1), with(500, 2), with(100, 5));
 
         MinBanknotesWithdrawalStrategy strategy = new MinBanknotesWithdrawalStrategy();
-        Map<Integer, Integer> result = strategy.withdraw(1600, cells);
+        Map<Nominal, Integer> result = strategy.withdraw(1600, cells);
 
         assertEquals(3, result.size());
-        assertEquals(1, result.get(1000));
-        assertEquals(1, result.get(500));
-        assertEquals(1, result.get(100));
+        assertEquals(1, result.get(Nominal.RUB_1000));
+        assertEquals(1, result.get(Nominal.RUB_500));
+        assertEquals(1, result.get(Nominal.RUB_100));
     }
 
     @Test
@@ -34,7 +34,7 @@ public class MinBanknotesWithdrawalStrategyTest {
     }
 
     private BanknoteCell with(int nominal, int count) {
-        Banknote banknote = Banknote.fromValue(nominal);
+        Nominal banknote = Nominal.fromValue(nominal);
         BanknoteCell cell = new BanknoteCell(banknote);
         cell.addCount(count);
         return cell;

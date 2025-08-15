@@ -11,5 +11,5 @@ interface CashWithdrawalStrategy {
      * @return map: key — номинал, value — количество купюр
      * @throws IllegalArgumentException если сумму выдать невозможно
      */
-    Map<Integer, Integer> withdraw(int amount, List<BanknoteCell> cells);
+    Map<Nominal, Integer> withdraw(int amount, List<BanknoteCell> cells);
 }
