@@ -1,16 +1,39 @@
 package ru.otus.dataprocessor;
 
-import java.util.Collections;
+import jakarta.json.*;
+import java.util.ArrayList;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.otus.model.Measurement;
 
 public class ResourcesFileLoader implements Loader {
 
-    public ResourcesFileLoader(String fileName) {}
+    private static final Logger logger = LoggerFactory.getLogger(ResourcesFileLoader.class);
+    private final String fileName;
+
+    public ResourcesFileLoader(String fileName) {
+        this.fileName = fileName;
+    }
 
     @Override
     public List<Measurement> load() {
-        // читает файл, парсит и возвращает результат
-        return Collections.emptyList();
+        try (var jsonReader =
+                Json.createReader(ResourcesFileLoader.class.getClassLoader().getResourceAsStream(fileName))) {
+            JsonArray array = jsonReader.readArray();
+            logger.info("Loaded {} items from {}", array.size(), fileName);
+
+            List<Measurement> result = new ArrayList<>(array.size());
+            for (JsonValue v : array) {
+                JsonObject o = v.asJsonObject();
+                String name = o.getString("name");
+                double value = o.getJsonNumber("value").doubleValue();
+                result.add(new Measurement(name, value));
+            }
+            return result;
+        } catch (Exception e) {
+            logger.error("Failed to read {}", fileName, e);
+            throw new RuntimeException(e);
+        }
     }
 }

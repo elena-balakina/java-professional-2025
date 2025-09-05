@@ -7,18 +7,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 class ProcessorTest {
 
-    // Надо реализовать методы классов и убедиться, что тест проходит
-    // сам тест менять нельзя
-
     @Test
-    @Disabled("Чтобы прошел билд") // Эту аннотацию надо убрать
     @DisplayName("Из файла читается json, обрабатывается, результат сериализуется в строку")
     void processingTest(@TempDir Path tempDir) throws IOException {
         System.out.println(tempDir);
@@ -42,7 +37,6 @@ class ProcessorTest {
         assertThat(aggregatedMeasurements.entrySet()).hasSize(3);
 
         var serializedOutput = Files.readString(Paths.get(fullOutputFilePath));
-        // обратите внимание: важен порядок ключей
         assertThat(serializedOutput).isEqualTo("{\"val1\":3.0,\"val2\":30.0,\"val3\":33.0}");
     }
 }
