@@ -2,6 +2,10 @@ package ru.otus.dataprocessor;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -22,10 +26,14 @@ class ProcessorTest {
         var inputDataFileName = "inputData.json";
         var outputDataFileName = "outputData.json";
         var fullOutputFilePath = String.format("%s%s%s", tempDir, File.separator, outputDataFileName);
+        ObjectMapper mapper = JsonMapper.builder()
+                .configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)
+                .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
+                .build();
 
         var loader = new ResourcesFileLoader(inputDataFileName);
         var processor = new ProcessorAggregator();
-        var serializer = new FileSerializer(fullOutputFilePath);
+        var serializer = new FileSerializer(fullOutputFilePath, mapper);
 
         // when
         var loadedMeasurements = loader.load();

@@ -26,14 +26,13 @@ public class ResourcesFileLoader implements Loader {
             List<Measurement> result = new ArrayList<>(array.size());
             for (JsonValue v : array) {
                 JsonObject o = v.asJsonObject();
-                String name = o.getString("name");
-                double value = o.getJsonNumber("value").doubleValue();
-                result.add(new Measurement(name, value));
+                result.add(new Measurement(
+                        o.getString("name"), o.getJsonNumber("value").doubleValue()));
             }
             return result;
         } catch (Exception e) {
             logger.error("Failed to read {}", fileName, e);
-            throw new RuntimeException(e);
+            throw new FileProcessException(e);
         }
     }
 }
