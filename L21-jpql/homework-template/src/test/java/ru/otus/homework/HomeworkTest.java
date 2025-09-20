@@ -1,12 +1,5 @@
 package ru.otus.homework;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
-
-import java.lang.reflect.Field;
-import java.util.Collection;
-import java.util.List;
-import java.util.stream.StreamSupport;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataSources;
@@ -24,14 +17,20 @@ import ru.otus.crm.model.Address;
 import ru.otus.crm.model.Client;
 import ru.otus.crm.model.Phone;
 
+import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.StreamSupport;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+
 class HomeworkTest {
     private static final Logger logger = LoggerFactory.getLogger(HomeworkTest.class);
 
     private StandardServiceRegistry serviceRegistry;
     private Metadata metadata;
     private SessionFactory sessionFactory;
-
-    // Кроме удаления @Disabled, тестовый класс менять нельзя
 
     @BeforeEach
     void setUp() {
@@ -92,10 +91,10 @@ class HomeworkTest {
     @Test
     void testForHomeworkRequirementsForClonedClientReferences() throws Exception {
         var client = new Client(
-                        null,
-                        "Vasya",
-                        new Address(null, "AnyStreet"),
-                        List.of(new Phone(null, "13-555-22"), new Phone(null, "14-666-333")))
+                null,
+                "Vasya",
+                new Address(null, "AnyStreet"),
+                List.of(new Phone(null, "13-555-22"), new Phone(null, "14-666-333")))
                 .clone();
         assertThatClientHasCorrectReferences(client);
     }
@@ -124,14 +123,14 @@ class HomeworkTest {
     private void assertThatObjectHasExpectedClientFieldValue(Object object, Client client) {
         assertThat(object).isNotNull();
         assertThatCode(() -> {
-                    for (var field : object.getClass().getDeclaredFields()) {
-                        if (field.getType().equals(Client.class)) {
-                            field.setAccessible(true);
-                            var innerClient = field.get(object);
-                            assertThat(innerClient).isNotNull().isSameAs(client);
-                        }
-                    }
-                })
+            for (var field : object.getClass().getDeclaredFields()) {
+                if (field.getType().equals(Client.class)) {
+                    field.setAccessible(true);
+                    var innerClient = field.get(object);
+                    assertThat(innerClient).isNotNull().isSameAs(client);
+                }
+            }
+        })
                 .doesNotThrowAnyException();
     }
 

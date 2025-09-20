@@ -21,4 +21,16 @@ public class MigrationsExecutorFlyway {
         flyway.migrate();
         logger.info("db migration finished.");
     }
+
+    public void executeMigrationsWithCleanupDb() {
+        logger.info("db clean+migrate started...");
+        Flyway cleanFlyway = Flyway.configure()
+                .configuration(flyway.getConfiguration())
+                .cleanDisabled(false)
+                .load();
+
+        cleanFlyway.clean();
+        cleanFlyway.migrate();
+        logger.info("db clean+migrate finished.");
+    }
 }

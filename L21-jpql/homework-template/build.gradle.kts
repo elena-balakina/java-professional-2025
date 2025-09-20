@@ -4,7 +4,6 @@ dependencies {
 
     implementation("ch.qos.logback:logback-classic")
     implementation("org.hibernate.orm:hibernate-core")
-    implementation("org.flywaydb:flyway-core")
 
     implementation("org.postgresql:postgresql")
 
@@ -16,4 +15,7 @@ dependencies {
 
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
+
+    implementation("org.flywaydb:flyway-core:10.15.0")
+    implementation("org.flywaydb:flyway-database-postgresql:10.15.0")
 }
