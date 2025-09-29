@@ -2,11 +2,15 @@ package ru.otus.cachehw;
 
 import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class MyCache<K, V> implements HwCache<K, V> {
 
+    private static final Logger logger = Logger.getLogger(HwCache.class.getName());
+
     private final Map<K, V> storage = new WeakHashMap<>();
-    private final List<WeakReference<HwListener<K, V>>> listeners = Collections.synchronizedList(new ArrayList<>());
+    private final List<WeakReference<HwListener<K, V>>> listeners = new ArrayList<>();
 
     @Override
     public void put(K key, V value) {
@@ -30,7 +34,7 @@ public class MyCache<K, V> implements HwCache<K, V> {
 
     @Override
     public void addListener(HwListener<K, V> listener) {
-        if (listener == null) return;
+        if (listener == null) { return; }
         listeners.add(new WeakReference<>(listener));
     }
 
@@ -53,7 +57,9 @@ public class MyCache<K, V> implements HwCache<K, V> {
                 if (l != null) {
                     try {
                         l.notify(key, value, action);
-                    } catch (Exception ignored) {
+                    } catch (Exception e) {
+                        logger.log(Level.SEVERE, "Error while notify listener " + l +
+                                " (key=" + key + ", value=" + value + ", action=" + action + ")", e);
                     }
                 } else {
                     toRemove.add(ref);
