@@ -1,44 +1,73 @@
 <!DOCTYPE html>
 <html lang="ru" xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <title>Пользователи</title>
-    <script>
-        function getUserById() {
-            const userIdTextBox = document.getElementById('userIdTextBox');
-            const userDataContainer = document.getElementById('userDataContainer');
-            const id = userIdTextBox.value;
-            //fetch('api/user?id=' + id)
-            fetch('api/user/' + id)
-                .then(response => response.json())
-                .then(user => userDataContainer.innerHTML = JSON.stringify(user));
+    <meta charset="UTF-8"/>
+    <title>Клиенты</title>
+    <style>
+        body { font-family: sans-serif; margin: 24px; }
+        form {
+            margin-bottom: 24px;
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            gap: 8px 12px;
+            max-width: 520px;
         }
-    </script>
+        form label { align-self: center; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        th { text-align: left; }
+        thead { background: #f3f3f3; }
+        .actions { margin-top: 8px; }
+    </style>
 </head>
-
 <body>
-<h4>Получить пользователя по id</h4>
-<input type="text" id = "userIdTextBox" value="3" placeholder="Введите id пользователя">
-<button onclick="getUserById()">Получить</button>
-<pre id = "userDataContainer"></pre>
 
-<h4>Случайный пользователь</h4>
-<table style="width: 400px">
+<h2>Создать клиента</h2>
+<form action="/users" method="post" accept-charset="UTF-8">
+    <label for="name">Имя</label>
+    <input id="name" name="name" type="text" required/>
+
+    <label for="login">Логин</label>
+    <input id="login" name="login" type="text" required/>
+
+    <label for="password">Пароль</label>
+    <input id="password" name="password" type="password" required/>
+
+    <div></div>
+    <div class="actions">
+        <button type="submit">Создать клиента</button>
+    </div>
+</form>
+
+<h2>Список клиентов:</h2>
+<table>
     <thead>
-        <tr>
-            <th style="width: 50px">Id</th>
-            <th style="width: 150px">Имя</th>
-            <th style="width: 100px">Логин</th>
-            <th style="width: 100px">Пароль</th>
-        </tr>
+    <tr>
+        <th style="width: 80px">ID</th>
+        <th>Имя</th>
+        <th>Логин</th>
+        <th>Пароль</th>
+    </tr>
     </thead>
     <tbody>
-        <tr>
-            <td>${randomUser.id}</td>
-            <td>${randomUser.name}</td>
-            <td>${randomUser.login}</td>
-            <td>${randomUser.password}</td>
-        </tr>
-    </tbody>
+    <#if users?? && users?size gt 0>
+    <#list users as u>
+    <#if u??>
+    <tr>
+        <td>${u.id!}</td>
+        <td>${u.name!}</td>
+        <td>${u.login!}</td>
+        <td>${u.password!}</td>
+    </tr>
+    </#if>
+</#list>
+<#else>
+<tr>
+    <td colspan="4">Пока нет клиентов</td>
+</tr>
+</#if>
+</tbody>
 </table>
+
 </body>
 </html>

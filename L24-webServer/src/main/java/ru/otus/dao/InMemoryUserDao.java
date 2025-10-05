@@ -1,9 +1,9 @@
 package ru.otus.dao;
 
 import java.security.SecureRandom;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 import ru.otus.model.User;
 
 @SuppressWarnings("java:S2068")
@@ -11,17 +11,27 @@ public class InMemoryUserDao implements UserDao {
 
     public static final String DEFAULT_PASSWORD = "11111";
     private final SecureRandom random = new SecureRandom();
-    private final Map<Long, User> users;
+    private final Map<Long, User> users = new HashMap<>();
+
+    private final AtomicLong idAutoInc = new AtomicLong(0L);
 
     public InMemoryUserDao() {
-        users = new HashMap<>();
-        users.put(1L, new User(1L, "Крис Гир", "user1", DEFAULT_PASSWORD));
-        users.put(2L, new User(2L, "Ая Кэш", "user2", DEFAULT_PASSWORD));
-        users.put(3L, new User(3L, "Десмин Боргес", "user3", DEFAULT_PASSWORD));
-        users.put(4L, new User(4L, "Кетер Донохью", "user4", DEFAULT_PASSWORD));
-        users.put(5L, new User(5L, "Стивен Шнайдер", "user5", DEFAULT_PASSWORD));
-        users.put(6L, new User(6L, "Джанет Вэрни", "user6", DEFAULT_PASSWORD));
-        users.put(7L, new User(7L, "Брэндон Смит", "user7", DEFAULT_PASSWORD));
+        // примеры начальных пользователей
+        putInitial(new User(nextId(), "Крис Гир", "user1", DEFAULT_PASSWORD));
+        putInitial(new User(nextId(), "Ая Кэш", "user2", DEFAULT_PASSWORD));
+        putInitial(new User(nextId(), "Десмин Боргес", "user3", DEFAULT_PASSWORD));
+        putInitial(new User(nextId(), "Кетер Донохью", "user4", DEFAULT_PASSWORD));
+        putInitial(new User(nextId(), "Стивен Шнайдер", "user5", DEFAULT_PASSWORD));
+        putInitial(new User(nextId(), "Джанет Вэрни", "user6", DEFAULT_PASSWORD));
+        putInitial(new User(nextId(), "Брэндон Смит", "user7", DEFAULT_PASSWORD));
+    }
+
+    private long nextId() {
+        return idAutoInc.incrementAndGet();
+    }
+
+    private void putInitial(User u) {
+        users.put(u.getId(), u);
     }
 
     @Override
@@ -38,5 +48,20 @@ public class InMemoryUserDao implements UserDao {
     @Override
     public Optional<User> findByLogin(String login) {
         return users.values().stream().filter(v -> v.getLogin().equals(login)).findFirst();
+    }
+
+    @Override
+    public List<User> findAllOrderByIdDesc() {
+        return users.values().stream()
+                .sorted(Comparator.comparingLong(User::getId).reversed())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public User create(String name, String login, String password) {
+        long id = nextId();
+        User u = new User(id, name, login, password);
+        users.put(id, u);
+        return u;
     }
 }

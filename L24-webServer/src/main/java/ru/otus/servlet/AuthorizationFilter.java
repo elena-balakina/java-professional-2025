@@ -11,14 +11,17 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.util.Set;
 
 public class AuthorizationFilter implements Filter {
 
     private ServletContext context;
+    private Set<String> openPrefixes;
 
     @Override
     public void init(FilterConfig filterConfig) {
         this.context = filterConfig.getServletContext();
+        this.openPrefixes = Set.of("/login", "/css/", "/js/", "/images/", "/static/", "/api/user");
     }
 
     @Override
@@ -27,15 +30,23 @@ public class AuthorizationFilter implements Filter {
         HttpServletRequest request = (HttpServletRequest) servletRequest;
         HttpServletResponse response = (HttpServletResponse) servletResponse;
 
+        String contextPath = request.getContextPath();
         String uri = request.getRequestURI();
-        this.context.log("Requested Resource:" + uri);
+        String path = uri.substring(contextPath.length());
+        this.context.log("Requested Resource:" + path);
+
+        boolean isOpen = openPrefixes.stream().anyMatch(path::startsWith);
+        if (isOpen) {
+            filterChain.doFilter(servletRequest, servletResponse);
+            return;
+        }
 
         HttpSession session = request.getSession(false);
-
-        if (session == null) {
-            response.sendRedirect("/login");
-        } else {
+        Object logged = (session == null) ? null : session.getAttribute("login");
+        if (logged != null) {
             filterChain.doFilter(servletRequest, servletResponse);
+        } else {
+            response.sendRedirect(contextPath + "/login");
         }
     }
 

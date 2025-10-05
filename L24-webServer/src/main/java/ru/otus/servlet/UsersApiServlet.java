@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Optional;
 import ru.otus.dao.UserDao;
 import ru.otus.model.User;
 
@@ -24,16 +25,31 @@ public class UsersApiServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        User user = userDao.findById(extractIdFromRequest(request)).orElse(null);
-
         response.setContentType("application/json;charset=UTF-8");
         ServletOutputStream out = response.getOutputStream();
-        out.print(gson.toJson(user));
+
+        Optional<Long> id = extractIdFromRequest(request);
+        if (id.isEmpty()) {
+            out.print(gson.toJson(userDao.findAllOrderByIdDesc()));
+        } else {
+            User user = userDao.findById(id.get()).orElse(null);
+            out.print(gson.toJson(user));
+        }
     }
 
-    private long extractIdFromRequest(HttpServletRequest request) {
-        String[] path = request.getPathInfo().split("/");
-        String id = (path.length > 1) ? path[ID_PATH_PARAM_POSITION] : String.valueOf(-1);
-        return Long.parseLong(id);
+    private Optional<Long> extractIdFromRequest(HttpServletRequest request) {
+        String pathInfo = request.getPathInfo();
+        if (pathInfo == null || pathInfo.isBlank()) {
+            return Optional.empty();
+        }
+        String[] path = pathInfo.split("/");
+        if (path.length <= ID_PATH_PARAM_POSITION || path[ID_PATH_PARAM_POSITION].isBlank()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(Long.parseLong(path[ID_PATH_PARAM_POSITION]));
+        } catch (NumberFormatException e) {
+            return Optional.empty();
+        }
     }
 }
