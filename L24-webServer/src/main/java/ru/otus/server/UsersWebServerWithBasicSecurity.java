@@ -11,6 +11,7 @@ import org.eclipse.jetty.security.Constraint;
 import org.eclipse.jetty.security.LoginService;
 import org.eclipse.jetty.security.authentication.BasicAuthenticator;
 import org.eclipse.jetty.server.Handler;
+import ru.otus.dao.ClientDao;
 import ru.otus.dao.UserDao;
 import ru.otus.services.TemplateProcessor;
 
@@ -21,8 +22,13 @@ public class UsersWebServerWithBasicSecurity extends UsersWebServerSimple {
     private final LoginService loginService;
 
     public UsersWebServerWithBasicSecurity(
-            int port, LoginService loginService, UserDao userDao, Gson gson, TemplateProcessor templateProcessor) {
-        super(port, userDao, gson, templateProcessor);
+            int port,
+            LoginService loginService,
+            UserDao userDao,
+            Gson gson,
+            TemplateProcessor templateProcessor,
+            ClientDao clientDao) {
+        super(port, userDao, gson, templateProcessor, clientDao);
         this.loginService = loginService;
     }
 

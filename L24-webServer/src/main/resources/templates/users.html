@@ -15,7 +15,6 @@
         form label { align-self: center; }
         table { border-collapse: collapse; width: 100%; }
         th, td { border: 1px solid #ddd; padding: 8px; }
-        th { text-align: left; }
         thead { background: #f3f3f3; }
         .actions { margin-top: 8px; }
     </style>
@@ -27,44 +26,46 @@
     <label for="name">Имя</label>
     <input id="name" name="name" type="text" required/>
 
-    <label for="login">Логин</label>
-    <input id="login" name="login" type="text" required/>
+    <label for="street">Адрес (улица)</label>
+    <input id="street" name="street" type="text" required/>
 
-    <label for="password">Пароль</label>
-    <input id="password" name="password" type="password" required/>
+    <label for="phone">Телефон</label>
+    <input id="phone" name="phone" type="text" placeholder="+7 xxx xxx-xx-xx"/>
 
     <div></div>
     <div class="actions">
-        <button type="submit">Создать клиента</button>
+        <button type="submit">Создать</button>
     </div>
 </form>
 
-<h2>Список клиентов:</h2>
+<h2>Список клиентов (новые сверху)</h2>
 <table>
     <thead>
     <tr>
-        <th style="width: 80px">ID</th>
+        <th style="width:80px">ID</th>
         <th>Имя</th>
-        <th>Логин</th>
-        <th>Пароль</th>
+        <th>Адрес (улица)</th>
+        <th>Телефон</th>
     </tr>
     </thead>
     <tbody>
-    <#if users?? && users?size gt 0>
-    <#list users as u>
-    <#if u??>
+    <#if clients?? && clients?size gt 0>
+    <#list clients as c>
     <tr>
-        <td>${u.id!}</td>
-        <td>${u.name!}</td>
-        <td>${u.login!}</td>
-        <td>${u.password!}</td>
+        <td>${c.id!}</td>
+        <td>${c.name!}</td>
+        <td>${(c.address.street)!}</td>
+        <td>
+            <#if c.phones?? && (c.phones?size > 0)>
+            ${ (c.phones[0].number)! }
+            <#else>
+            —
+        </#if>
+        </td>
     </tr>
-    </#if>
-</#list>
-<#else>
-<tr>
-    <td colspan="4">Пока нет клиентов</td>
-</tr>
+    </#list>
+    <#else>
+    <tr><td colspan="4">Пока нет клиентов</td></tr>
 </#if>
 </tbody>
 </table>
