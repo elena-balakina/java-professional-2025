@@ -2,6 +2,7 @@ package ru.otus;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 import ru.otus.dao.ClientDao;
 import ru.otus.dao.HibernateClientDao;
@@ -41,17 +42,11 @@ import ru.otus.utils.HibernateUtils;
 public class WebServerWithFilterBasedSecurityDemo {
     private static final int WEB_SERVER_PORT = 8080;
     private static final String TEMPLATES_DIR = "/templates/";
+    private static final String HIBERNATE_CFG_FILE = "hibernate.cfg.xml";
 
     public static void main(String[] args) throws Exception {
         UserDao userDao = new InMemoryUserDao();
-
-        var hibernateCfg = new Configuration().configure("hibernate.cfg.xml");
-        var dbUrl = hibernateCfg.getProperty("hibernate.connection.url");
-        var dbUser = hibernateCfg.getProperty("hibernate.connection.username");
-        var dbPwd = hibernateCfg.getProperty("hibernate.connection.password");
-        new MigrationsExecutorFlyway(dbUrl, dbUser, dbPwd).executeMigrationsWithCleanupDb();
-
-        var sessionFactory = HibernateUtils.buildSessionFactory(hibernateCfg, Client.class, Address.class, Phone.class);
+        SessionFactory sessionFactory = buildSessionFactoryAndMigrateDb();
 
         ClientDao clientDao = new HibernateClientDao(sessionFactory);
         Gson gson = new GsonBuilder().serializeNulls().setPrettyPrinting().create();
@@ -59,9 +54,24 @@ public class WebServerWithFilterBasedSecurityDemo {
         UserAuthService authService = new UserAuthServiceImpl(userDao);
 
         UsersWebServer usersWebServer = new UsersWebServerWithFilterBasedSecurity(
-                WEB_SERVER_PORT, authService, userDao, gson, templateProcessor, clientDao);
+                WEB_SERVER_PORT, authService, userDao, gson, templateProcessor, clientDao
+        );
 
         usersWebServer.start();
         usersWebServer.join();
+    }
+
+    private static SessionFactory buildSessionFactoryAndMigrateDb() {
+        var hibernateCfg = new Configuration().configure(HIBERNATE_CFG_FILE);
+
+        var dbUrl = hibernateCfg.getProperty("hibernate.connection.url");
+        var dbUser = hibernateCfg.getProperty("hibernate.connection.username");
+        var dbPwd = hibernateCfg.getProperty("hibernate.connection.password");
+
+        new MigrationsExecutorFlyway(dbUrl, dbUser, dbPwd).executeMigrationsWithCleanupDb();
+
+        return HibernateUtils.buildSessionFactory(
+                hibernateCfg, Client.class, Address.class, Phone.class
+        );
     }
 }
