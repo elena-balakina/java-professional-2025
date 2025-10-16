@@ -67,7 +67,7 @@ public class AppComponentsContainerImpl implements AppComponentsContainer {
         Class<?>[] paramTypes = factoryMethod.getParameterTypes();
         Object[] args = new Object[paramTypes.length];
         for (int i = 0; i < paramTypes.length; i++) {
-            args[i] = resolveByType(paramTypes[i], "Creating component '" + name + "'");
+            args[i] = getAppComponent(paramTypes[i]);
         }
 
         try {
@@ -80,23 +80,6 @@ public class AppComponentsContainerImpl implements AppComponentsContainer {
         } catch (IllegalAccessException | InvocationTargetException e) {
             throw new IllegalStateException("Failed to create component '" + name + "' via " + factoryMethod, e);
         }
-    }
-
-    private Object resolveByType(Class<?> requiredType, String ctx) {
-        Object result = null;
-        for (Object candidate : appComponents) {
-            if (requiredType.isAssignableFrom(candidate.getClass())) {
-                if (result != null) {
-                    throw new IllegalStateException(
-                            "Ambiguous dependency for type " + requiredType.getName() + ". " + ctx);
-                }
-                result = candidate;
-            }
-        }
-        if (result == null) {
-            throw new IllegalStateException("Unsatisfied dependency for type " + requiredType.getName() + ". " + ctx);
-        }
-        return result;
     }
 
     @Override
