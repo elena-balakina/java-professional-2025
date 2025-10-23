@@ -57,32 +57,24 @@ class ClientControllerTest {
     }
 
     @Test
-    @DisplayName("GET /clients — возвращает список и вью clients/list")
-    void list_returnsViewAndModel() throws Exception {
-        when(clientService.findAll())
+    @DisplayName("GET /clients — возвращает форму + список и вью clients/index")
+    void index_returnsViewAndModel() throws Exception {
+        when(clientService.findAllOrderByNewest())
                 .thenReturn(List.of(
-                        client(1L, "Ivan", "Arbat 10", "+7 999 111-22-33"),
-                        client(2L, "John", "Baker 221B", "+44 20 1234 5678")));
+                        client(2L, "John", "Baker 221B", "+44 20 1234 5678"),
+                        client(1L, "Ivan", "Arbat 10", "+7 999 111-22-33")));
 
         mvc.perform(get("/clients"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("clients/list"))
+                .andExpect(view().name("clients/index"))
+                .andExpect(model().attributeExists("client"))
+                .andExpect(model().attributeExists("street"))
+                .andExpect(model().attributeExists("phones"))
+                .andExpect(model().attribute("phones", hasSize(2)))
                 .andExpect(model().attributeExists("clients"))
                 .andExpect(model().attribute("clients", iterableWithSize(2)));
 
-        verify(clientService).findAll();
-    }
-
-    @Test
-    @DisplayName("GET /clients/new — возвращает форму создания")
-    void createForm_returnsForm() throws Exception {
-        mvc.perform(get("/clients/new"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("clients/form"))
-                .andExpect(model().attributeExists("client"))
-                .andExpect(model().attributeExists("phones"))
-                .andExpect(model().attribute("phones", hasSize(2)))
-                .andExpect(model().attributeExists("street"));
+        verify(clientService).findAllOrderByNewest();
     }
 
     @Test
@@ -106,7 +98,6 @@ class ClientControllerTest {
         Client saved = clientCap.getValue();
         List<String> numbers = phonesCap.getValue();
 
-        // простые проверки
         assert saved.getId() == null;
         assert saved.getName().equals("New User");
         assert numbers.size() == 2;
@@ -114,30 +105,38 @@ class ClientControllerTest {
     }
 
     @Test
-    @DisplayName("POST /clients — валидационная ошибка (пустое имя) → остаёмся на форме")
+    @DisplayName("POST /clients — валидационная ошибка (пустое имя) → остаёмся на clients/index")
     void create_invalid_showsForm() throws Exception {
+        when(clientService.findAllOrderByNewest()).thenReturn(List.of()); // для повторного рендера
+
         mvc.perform(post("/clients").param("name", "").param("street", "Any"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("clients/form"))
-                .andExpect(model().hasErrors());
+                .andExpect(view().name("clients/index"))
+                .andExpect(model().hasErrors())
+                .andExpect(model().attributeExists("clients"))
+                .andExpect(model().attributeExists("phones"))
+                .andExpect(model().attributeExists("street"));
 
         verify(clientService, never()).createOrUpdate(any(), any(), anyList());
     }
 
     @Test
-    @DisplayName("GET /clients/{id}/edit — заполняет модель и отдаёт форму")
+    @DisplayName("GET /clients/{id}/edit — та же страница с заполненной формой")
     void editForm_populatesModel() throws Exception {
         Client c = client(10L, "Alice", "Main st.", "+1 111");
         when(clientService.findById(10L)).thenReturn(Optional.of(c));
+        when(clientService.findAllOrderByNewest()).thenReturn(List.of(c));
 
         mvc.perform(get("/clients/10/edit"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("clients/form"))
+                .andExpect(view().name("clients/index"))
                 .andExpect(model().attributeExists("client"))
                 .andExpect(model().attribute("street", "Main st."))
-                .andExpect(model().attribute("phones", hasSize(1)));
+                .andExpect(model().attribute("phones", hasSize(1)))
+                .andExpect(model().attributeExists("clients"));
 
         verify(clientService).findById(10L);
+        verify(clientService).findAllOrderByNewest();
     }
 
     @Test

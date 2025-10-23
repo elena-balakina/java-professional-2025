@@ -37,6 +37,10 @@ public class ClientService {
         return c;
     }
 
+    public List<Client> findAllOrderByNewest() {
+        return clientRepository.findAllByOrderByIdDesc();
+    }
+
     @Transactional
     public Client createOrUpdate(Client client, String street, List<String> numbers) {
         Address address = null;
