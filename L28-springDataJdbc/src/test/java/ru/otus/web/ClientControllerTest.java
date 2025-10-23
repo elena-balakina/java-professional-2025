@@ -1,0 +1,170 @@
+package ru.otus.web;
+
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.iterableWithSize;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import java.util.List;
+import java.util.Optional;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.web.servlet.MockMvc;
+import ru.otus.model.Address;
+import ru.otus.model.Client;
+import ru.otus.model.Phone;
+import ru.otus.service.ClientService;
+
+@WebMvcTest(ClientController.class)
+@AutoConfigureMockMvc(addFilters = false)
+class ClientControllerTest {
+
+    @Autowired
+    MockMvc mvc;
+
+    @Autowired
+    org.springframework.validation.Validator validator;
+
+    @MockBean
+    ClientService clientService;
+
+    private static Client client(long id, String name, String street, String... phones) {
+        Client c = new Client();
+        c.setId(id);
+        c.setName(name);
+        if (street != null) {
+            Address a = new Address();
+            a.setId(100L);
+            a.setStreet(street);
+            c.setAddressId(a.getId());
+            c.setAddress(a);
+        }
+        c.setPhones(
+                phones == null
+                        ? List.of()
+                        : java.util.Arrays.stream(phones)
+                                .map(p -> new Phone(null, p, id))
+                                .toList());
+        return c;
+    }
+
+    @Test
+    @DisplayName("GET /clients — возвращает список и вью clients/list")
+    void list_returnsViewAndModel() throws Exception {
+        when(clientService.findAll())
+                .thenReturn(List.of(
+                        client(1L, "Ivan", "Arbat 10", "+7 999 111-22-33"),
+                        client(2L, "John", "Baker 221B", "+44 20 1234 5678")));
+
+        mvc.perform(get("/clients"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("clients/list"))
+                .andExpect(model().attributeExists("clients"))
+                .andExpect(model().attribute("clients", iterableWithSize(2)));
+
+        verify(clientService).findAll();
+    }
+
+    @Test
+    @DisplayName("GET /clients/new — возвращает форму создания")
+    void createForm_returnsForm() throws Exception {
+        mvc.perform(get("/clients/new"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("clients/form"))
+                .andExpect(model().attributeExists("client"))
+                .andExpect(model().attributeExists("phones"))
+                .andExpect(model().attribute("phones", hasSize(2)))
+                .andExpect(model().attributeExists("street"));
+    }
+
+    @Test
+    @DisplayName("POST /clients — успешное создание → редирект на /clients")
+    void create_valid_redirects() throws Exception {
+        when(clientService.createOrUpdate(any(Client.class), any(), anyList())).thenAnswer(inv -> inv.getArgument(0));
+
+        mvc.perform(post("/clients")
+                        .param("name", "New User")
+                        .param("addressId", "1")
+                        .param("street", "Nevsky, 1")
+                        .param("phones", "+7 900 000-00-00")
+                        .param("phones", "+7 901 111-11-11"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/clients"));
+
+        ArgumentCaptor<Client> clientCap = ArgumentCaptor.forClass(Client.class);
+        ArgumentCaptor<List<String>> phonesCap = ArgumentCaptor.forClass(List.class);
+
+        verify(clientService).createOrUpdate(clientCap.capture(), eq("Nevsky, 1"), phonesCap.capture());
+        Client saved = clientCap.getValue();
+        List<String> numbers = phonesCap.getValue();
+
+        // простые проверки
+        assert saved.getId() == null;
+        assert saved.getName().equals("New User");
+        assert numbers.size() == 2;
+        assert numbers.get(0).contains("+7");
+    }
+
+    @Test
+    @DisplayName("POST /clients — валидационная ошибка (пустое имя) → остаёмся на форме")
+    void create_invalid_showsForm() throws Exception {
+        mvc.perform(post("/clients").param("name", "").param("street", "Any"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("clients/form"))
+                .andExpect(model().hasErrors());
+
+        verify(clientService, never()).createOrUpdate(any(), any(), anyList());
+    }
+
+    @Test
+    @DisplayName("GET /clients/{id}/edit — заполняет модель и отдаёт форму")
+    void editForm_populatesModel() throws Exception {
+        Client c = client(10L, "Alice", "Main st.", "+1 111");
+        when(clientService.findById(10L)).thenReturn(Optional.of(c));
+
+        mvc.perform(get("/clients/10/edit"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("clients/form"))
+                .andExpect(model().attributeExists("client"))
+                .andExpect(model().attribute("street", "Main st."))
+                .andExpect(model().attribute("phones", hasSize(1)));
+
+        verify(clientService).findById(10L);
+    }
+
+    @Test
+    @DisplayName("POST /clients/{id} — успешное обновление → редирект")
+    void update_valid_redirects() throws Exception {
+        when(clientService.createOrUpdate(any(Client.class), any(), anyList())).thenAnswer(inv -> inv.getArgument(0));
+
+        mvc.perform(post("/clients/42")
+                        .param("name", "Updated")
+                        .param("street", "Lenina, 5")
+                        .param("phones", "+7 902 222-22-22"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/clients"));
+
+        ArgumentCaptor<Client> cap = ArgumentCaptor.forClass(Client.class);
+        verify(clientService).createOrUpdate(cap.capture(), eq("Lenina, 5"), anyList());
+        assert cap.getValue().getId().equals(42L);
+        assert cap.getValue().getName().equals("Updated");
+    }
+
+    @Test
+    @DisplayName("POST /clients/{id}/delete — удаляет и редиректит")
+    void delete_redirects() throws Exception {
+        mvc.perform(post("/clients/5/delete"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/clients"));
+
+        verify(clientService).deleteById(5L);
+    }
+}
