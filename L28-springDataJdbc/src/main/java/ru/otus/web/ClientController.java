@@ -8,6 +8,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import ru.otus.model.Client;
+import ru.otus.model.Phone;
 import ru.otus.service.ClientService;
 
 @Controller
@@ -33,41 +34,32 @@ public class ClientController {
         binder.setDisallowedFields(ATTR_PHONES);
     }
 
-    /**
-     * список + пустая форма (create)
-     */
     @GetMapping
     public String index(Model model) {
         model.addAttribute(ATTR_CLIENT, new Client());
         model.addAttribute(ATTR_STREET, "");
-        model.addAttribute(ATTR_PHONES, List.of("", "")); // 2 поля по умолчанию
+        model.addAttribute(ATTR_PHONES, List.of("", ""));
         model.addAttribute(ATTR_CLIENTS, clientService.findAllOrderByNewest());
         return VIEW_INDEX;
     }
 
-    /**
-     * создать
-     */
     @PostMapping
     public String create(
             @ModelAttribute("client") @Valid Client client,
             BindingResult br,
-            @RequestParam(name = "street", required = false) String street,
-            @RequestParam(name = "phones", required = false) List<String> phones,
+            @RequestParam(name = ATTR_STREET, required = false) String street,
+            @RequestParam(name = ATTR_PHONES, required = false) List<String> phones,
             Model model) {
         if (br.hasErrors()) {
-            model.addAttribute("clients", clientService.findAllOrderByNewest());
-            model.addAttribute("street", street == null ? "" : street);
-            model.addAttribute("phones", (phones == null || phones.isEmpty()) ? List.of("", "") : phones);
-            return "clients/index";
+            model.addAttribute(ATTR_CLIENTS, clientService.findAllOrderByNewest());
+            model.addAttribute(ATTR_STREET, street == null ? "" : street);
+            model.addAttribute(ATTR_PHONES, (phones == null || phones.isEmpty()) ? List.of("", "") : phones);
+            return VIEW_INDEX;
         }
         clientService.createOrUpdate(client, street, phones == null ? List.of() : phones);
-        return "redirect:/clients";
+        return REDIRECT_CLIENTS;
     }
 
-    /**
-     * форма в режиме редактирования (та же страница, но с данными клиента)
-     */
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
         Client c = clientService.findById(id).orElseThrow();
@@ -75,37 +67,31 @@ public class ClientController {
         model.addAttribute(ATTR_STREET, c.getAddress() != null ? c.getAddress().getStreet() : "");
         List<String> nums = (c.getPhones() == null || c.getPhones().isEmpty())
                 ? List.of("")
-                : c.getPhones().stream().map(p -> p.getNumber()).toList();
+                : c.getPhones().stream().map(Phone::getNumber).toList();
         model.addAttribute(ATTR_PHONES, nums);
         model.addAttribute(ATTR_CLIENTS, clientService.findAllOrderByNewest());
         return VIEW_INDEX;
     }
 
-    /**
-     * сохранить изменения
-     */
     @PostMapping("/{id}")
     public String update(
             @PathVariable Long id,
             @ModelAttribute("client") @Valid Client client,
             BindingResult br,
-            @RequestParam(name = "street", required = false) String street,
-            @RequestParam(name = "phones", required = false) List<String> phones,
+            @RequestParam(name = ATTR_STREET, required = false) String street,
+            @RequestParam(name = ATTR_PHONES, required = false) List<String> phones,
             Model model) {
         if (br.hasErrors()) {
-            model.addAttribute("clients", clientService.findAllOrderByNewest());
-            model.addAttribute("street", street == null ? "" : street);
-            model.addAttribute("phones", (phones == null || phones.isEmpty()) ? List.of("", "") : phones);
-            return "clients/index";
+            model.addAttribute(ATTR_CLIENTS, clientService.findAllOrderByNewest());
+            model.addAttribute(ATTR_STREET, street == null ? "" : street);
+            model.addAttribute(ATTR_PHONES, (phones == null || phones.isEmpty()) ? List.of("", "") : phones);
+            return VIEW_INDEX;
         }
         client.setId(id);
         clientService.createOrUpdate(client, street, phones == null ? List.of() : phones);
-        return "redirect:/clients";
+        return REDIRECT_CLIENTS;
     }
 
-    /**
-     * удалить
-     */
     @PostMapping("/{id}/delete")
     public String delete(@PathVariable Long id) {
         clientService.deleteById(id);

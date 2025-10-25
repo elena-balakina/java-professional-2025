@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5430/demoDB
-    username: usr
-    password: pwd
+    url: jdbc:postgresql://localhost:5430/hw28-db
+    username: hw28
+    password: hw28
     driver-class-name: org.postgresql.Driver
 
   thymeleaf:
@@ -10,15 +10,16 @@ spring:
 
   flyway:
     enabled: true
+    cleanDisabled: false
     locations: classpath:db/migration
-    url: jdbc:postgresql://localhost:5430/demoDB
-    user: usr
-    password: pwd
-#    baseline-on-migrate: true
+    url: jdbc:postgresql://localhost:5430/hw28-db
+    user: hw28
+    password: hw28
 
 server:
   port: 8080
 
+debug: true
 logging:
   level:
     root: INFO

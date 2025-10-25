@@ -10,11 +10,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -23,8 +24,15 @@ import ru.otus.model.Client;
 import ru.otus.model.Phone;
 import ru.otus.service.ClientService;
 
-@WebMvcTest(ClientController.class)
-@AutoConfigureMockMvc(addFilters = false)
+@SuppressWarnings({"removal", "unchecked"})
+@WebMvcTest(
+        controllers = ClientController.class,
+        excludeAutoConfiguration = {
+            org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration.class,
+            org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration.class,
+            org.springframework.boot.autoconfigure.data.jdbc.JdbcRepositoriesAutoConfiguration.class,
+            org.springframework.boot.autoconfigure.thymeleaf.ThymeleafAutoConfiguration.class
+        })
 class ClientControllerTest {
 
     @Autowired
@@ -36,28 +44,30 @@ class ClientControllerTest {
     @MockBean
     ClientService clientService;
 
-    private static Client client(long id, String name, String street, String... phones) {
-        Client c = new Client();
-        c.setId(id);
-        c.setName(name);
+    private static Client client(long id, String name, String street, String... phoneNumbers) {
+        Client client = new Client();
+        client.setId(id);
+        client.setName(name);
+
         if (street != null) {
-            Address a = new Address();
-            a.setId(100L);
-            a.setStreet(street);
-            c.setAddressId(a.getId());
-            c.setAddress(a);
+            Address address = new Address();
+            address.setId(100L);
+            address.setStreet(street);
+            client.setAddressId(address.getId());
+            client.setAddress(address);
         }
-        c.setPhones(
-                phones == null
-                        ? List.of()
-                        : java.util.Arrays.stream(phones)
-                                .map(p -> new Phone(null, p, id))
-                                .toList());
-        return c;
+
+        Set<Phone> phoneSet = (phoneNumbers == null)
+                ? new java.util.LinkedHashSet<>()
+                : java.util.Arrays.stream(phoneNumbers)
+                        .map(p -> new Phone(null, p, id))
+                        .collect(Collectors.toCollection(java.util.LinkedHashSet::new));
+        client.setPhones(phoneSet);
+        return client;
     }
 
     @Test
-    @DisplayName("GET /clients — возвращает форму + список и вью clients/index")
+    @DisplayName("GET /clients — returns 'add client' form and clients list")
     void index_returnsViewAndModel() throws Exception {
         when(clientService.findAllOrderByNewest())
                 .thenReturn(List.of(
@@ -78,7 +88,7 @@ class ClientControllerTest {
     }
 
     @Test
-    @DisplayName("POST /clients — успешное создание → редирект на /clients")
+    @DisplayName("POST /clients — successful client creation + redirect to /clients")
     void create_valid_redirects() throws Exception {
         when(clientService.createOrUpdate(any(Client.class), any(), anyList())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -101,11 +111,11 @@ class ClientControllerTest {
         assert saved.getId() == null;
         assert saved.getName().equals("New User");
         assert numbers.size() == 2;
-        assert numbers.get(0).contains("+7");
+        assert numbers.getFirst().contains("+7");
     }
 
     @Test
-    @DisplayName("POST /clients — валидационная ошибка (пустое имя) → остаёмся на clients/index")
+    @DisplayName("POST /clients — empty name → stay on clients/index")
     void create_invalid_showsForm() throws Exception {
         when(clientService.findAllOrderByNewest()).thenReturn(List.of()); // для повторного рендера
 
@@ -121,7 +131,7 @@ class ClientControllerTest {
     }
 
     @Test
-    @DisplayName("GET /clients/{id}/edit — та же страница с заполненной формой")
+    @DisplayName("GET /clients/{id}/edit — the same page with filled in form")
     void editForm_populatesModel() throws Exception {
         Client c = client(10L, "Alice", "Main st.", "+1 111");
         when(clientService.findById(10L)).thenReturn(Optional.of(c));
@@ -140,7 +150,7 @@ class ClientControllerTest {
     }
 
     @Test
-    @DisplayName("POST /clients/{id} — успешное обновление → редирект")
+    @DisplayName("POST /clients/{id} — successful edit → redirect to /clients")
     void update_valid_redirects() throws Exception {
         when(clientService.createOrUpdate(any(Client.class), any(), anyList())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -158,7 +168,7 @@ class ClientControllerTest {
     }
 
     @Test
-    @DisplayName("POST /clients/{id}/delete — удаляет и редиректит")
+    @DisplayName("POST /clients/{id}/delete — delete and redirect to /clients")
     void delete_redirects() throws Exception {
         mvc.perform(post("/clients/5/delete"))
                 .andExpect(status().is3xxRedirection())

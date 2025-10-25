@@ -29,3 +29,41 @@ a, button {
 form {
     margin-top: 12px;
 }
+
+button.btn,
+a.btn {
+    display: inline-block;
+    font: inherit;
+    line-height: 1.2;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #eee;
+    color: #111;
+    cursor: pointer;
+    text-decoration: none;
+    padding: 6px 14px;
+    box-shadow: none;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.btn:hover {
+    filter: brightness(0.97);
+}
+
+button.btn-primary,
+a.btn-primary {
+    background: #0d6efd;
+    border-color: #0d6efd;
+    color: #fff;
+}
+
+button.btn-secondary,
+a.btn-secondary {
+    background: #e9ecef;
+    border-color: #ced4da;
+    color: #212529;
+}
+
+button {
+    padding: 6px 12px;
+}

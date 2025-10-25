@@ -11,9 +11,9 @@ dependencies {
     implementation("org.flywaydb:flyway-core:10.15.0")
     implementation("org.flywaydb:flyway-database-postgresql:10.15.0")
 
+    implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
-    implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }

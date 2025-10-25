@@ -1,8 +1,6 @@
 package ru.otus.service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.otus.model.Address;
@@ -32,17 +30,19 @@ public class ClientService {
     }
 
     public Optional<Client> findById(Long id) {
-        Optional<Client> c = clientRepository.findById(id);
-        c.ifPresent(this::hydrate);
-        return c;
+        Optional<Client> client = clientRepository.findById(id);
+        client.ifPresent(this::hydrate);
+        return client;
     }
 
     public List<Client> findAllOrderByNewest() {
-        return clientRepository.findAllByOrderByIdDesc();
+        List<Client> list = clientRepository.findAllByOrderByIdDesc();
+        list.forEach(this::hydrate);
+        return list;
     }
 
     @Transactional
-    public Client createOrUpdate(Client client, String street, List<String> numbers) {
+    public Client createOrUpdate(Client client, String street, List<String> phoneNumbers) {
         Address address = null;
         if (client.getAddressId() != null) {
             address = addressRepository.findById(client.getAddressId()).orElse(null);
@@ -55,13 +55,13 @@ public class ClientService {
         client = clientRepository.save(client);
 
         phoneRepository.deleteAllByClientId(client.getId());
-        List<Phone> phones = new ArrayList<>();
-        for (String n : numbers) {
-            if (n != null && !n.isBlank()) {
-                phones.add(new Phone(null, n.trim(), client.getId()));
+        Set<Phone> phones = new HashSet<>();
+        for (String phoneNumber : phoneNumbers) {
+            if (phoneNumber != null && !phoneNumber.isBlank()) {
+                phones.add(new Phone(null, phoneNumber.trim(), client.getId()));
             }
         }
-        phones.forEach(phoneRepository::save);
+        phoneRepository.saveAll(phones);
         client.setPhones(phones);
         client.setAddress(address);
         return client;
@@ -73,12 +73,12 @@ public class ClientService {
         clientRepository.deleteById(id);
     }
 
-    private void hydrate(Client c) {
-        if (c.getAddressId() != null) {
-            addressRepository.findById(c.getAddressId()).ifPresent(c::setAddress);
+    private void hydrate(Client client) {
+        if (client.getAddressId() != null) {
+            addressRepository.findById(client.getAddressId()).ifPresent(client::setAddress);
         }
-        List<Phone> phones = new ArrayList<>();
-        phoneRepository.findAllByClientId(c.getId()).forEach(phones::add);
-        c.setPhones(phones);
+        Set<Phone> phones = new HashSet<>();
+        phoneRepository.findAllByClientId(client.getId()).forEach(phones::add);
+        client.setPhones(phones);
     }
 }

@@ -1,8 +1,7 @@
 package ru.otus.model;
 
 import jakarta.validation.constraints.NotBlank;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,5 +29,5 @@ public class Client {
     private Address address;
 
     @MappedCollection(idColumn = "client_id")
-    private List<Phone> phones = new ArrayList<>();
+    private Set<Phone> phones;
 }
