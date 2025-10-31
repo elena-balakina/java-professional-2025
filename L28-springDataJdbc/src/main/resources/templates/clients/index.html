@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Clients</title>
+    <link rel="stylesheet" th:href="@{/styles.css}" />
+    <style>
+        body { font-family: system-ui, Arial, sans-serif; background: #fafafa; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: #fff; border-radius: 8px; padding: 24px; box-shadow: 0 2px 4px rgba(0,0,0,.1); }
+        h1 { margin-top: 0; }
+        form { margin-bottom: 32px; }
+        label { display: block; margin-top: 8px; font-weight: 500; }
+        input[type=text] { width: 100%; max-width: 480px; padding: 6px; margin-top: 4px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 6px 12px; margin-top: 12px; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 8px 10px; border-bottom: 1px solid #eee; }
+        th { background: #f7f7f7; text-align: left; }
+        .row-actions form { display: inline; }
+        .muted { color: #777; font-size: 0.9em; }
+        .phones { margin-top: 8px; }
+        .add-phone { margin-top: 6px; }
+        .error { color: #b33; margin-top: 8px; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <h1>Clients</h1>
+
+    <!-- форма создания/редактирования -->
+    <form th:action="${client.id == null} ? @{/clients} : @{/clients/{id}(id=${client.id})}"
+          th:object="${client}"
+          method="post">
+        <h2 th:text="${client.id == null} ? 'Create client' : 'Edit client'"></h2>
+
+        <label for="name">Name</label>
+        <input id="name" th:field="*{name}" required />
+
+        <label for="street">Street</label>
+        <input id="street" name="street" th:value="${street}" />
+
+        <div class="phones">
+            <label>Phones</label>
+            <div th:each="p, idx : ${phones}">
+                <label th:for="'phone' + ${idx.index}" class="muted">
+                    Phone <span th:text="${idx.index + 1}">1</span>
+                </label>
+                <input th:id="'phone' + ${idx.index}" name="phones" th:value="${p}" placeholder="+7 ..." />
+            </div>
+            <button class="add-phone" type="button" onclick="
+      const d=document.createElement('div');
+      const i=document.querySelectorAll('input[name=phones]').length+1;
+      d.innerHTML = '<label class=muted>Phone '+i+'</label><input name=phones placeholder=\'+7 ...\' />';
+      this.parentElement.appendChild(d);
+    ">+ add phone</button>
+        </div>
+
+        <div style="margin-top:12px">
+            <button type="submit" class="btn btn-primary"
+                    th:text="${client.id} == null ? 'Add' : 'Save'">Add</button>
+            <a class="btn btn-secondary" th:href="@{/clients}">Cancel</a>
+        </div>
+
+        <div th:if="${#fields.hasErrors('*')}" class="error">
+            <div th:each="e : ${#fields.errors('*')}" th:text="${e}">Error</div>
+        </div>
+    </form>
+
+    <!-- таблица клиентов -->
+    <table>
+        <thead>
+        <tr>
+            <th style="width:60px">ID</th>
+            <th>Name</th>
+            <th>Street</th>
+            <th>Phones</th>
+            <th style="width:180px">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="c : ${clients}">
+            <td th:text="${c.id}">1</td>
+            <td th:text="${c.name}">Alice</td>
+            <td th:text="${c.address != null ? c.address.street : ''}">Main St.</td>
+            <td>
+        <span th:if="${c.phones != null}" th:each="p, iter : ${c.phones}">
+          <span th:text="${p.number}">+7...</span><span th:if="${!iter.last}">, </span>
+        </span>
+            </td>
+            <td class="row-actions">
+                <form th:action="@{|/clients/${c.id}/edit|}" method="get">
+                    <button type="submit" class="btn btn-primary">Edit</button>
+                </form>
+                <form th:action="@{|/clients/${c.id}/delete|}" method="post" onsubmit="return confirm('Delete client #' + [[${c.id}]] + '?')">
+                    <button type="submit" class="btn btn-secondary">Delete</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+</div>
+</body>
+</html>
