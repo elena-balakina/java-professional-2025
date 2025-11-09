@@ -3,65 +3,54 @@ package ru.otus.services.processors;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.otus.api.SensorDataProcessor;
 import ru.otus.api.model.SensorData;
 import ru.otus.lib.SensorDataBufferedWriter;
 
-/**
- * Buffered data processor
- * Collect data and call method flush()
- */
 @SuppressWarnings({"java:S1068", "java:S125"})
 public class SensorDataProcessorBuffered implements SensorDataProcessor {
     private static final Logger log = LoggerFactory.getLogger(SensorDataProcessorBuffered.class);
 
     private final int bufferSize;
     private final SensorDataBufferedWriter writer;
-
-    private List<SensorData> dataBuffer = new ArrayList<>();
-    private final Object lock = new Object();
+    private final ArrayBlockingQueue<SensorData> buffer;
 
     public SensorDataProcessorBuffered(int bufferSize, SensorDataBufferedWriter writer) {
         this.bufferSize = bufferSize;
         this.writer = writer;
+        this.buffer = new ArrayBlockingQueue<>(bufferSize);
     }
 
     @Override
     public void process(SensorData data) {
-        boolean needFlush = false;
-        synchronized (lock) {
-            dataBuffer.add(data);
-            if (dataBuffer.size() >= bufferSize) {
-                // check limit and call method flush()
-                needFlush = true;
-            }
-        }
-        if (needFlush) {
+        if (!buffer.offer(data)) {
             flush();
+            try {
+                if (!buffer.offer(data)) {
+                    buffer.put(data);
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.warn("Interrupted while enqueuing sensor data", e);
+            }
         }
     }
 
     public void flush() {
-        List<SensorData> toWrite;
-        synchronized (lock) {
-            if (dataBuffer.isEmpty()) {
-                return;
-            }
-            var sorted = new ArrayList<>(dataBuffer);
-            sorted.sort(Comparator.comparing(SensorData::getMeasurementTime));
+        final List<SensorData> batch = new ArrayList<>(bufferSize);
+        buffer.drainTo(batch, bufferSize);
 
-            int endExclusive = Math.min(bufferSize, sorted.size());
-            toWrite = new ArrayList<>(sorted.subList(0, endExclusive));
-
-            dataBuffer = new ArrayList<>(sorted.subList(endExclusive, sorted.size()));
+        if (batch.isEmpty()) {
+            return;
         }
 
+        batch.sort(Comparator.comparing(SensorData::getMeasurementTime));
+
         try {
-            if (!toWrite.isEmpty()) {
-                writer.writeBufferedData(toWrite);
-            }
+            writer.writeBufferedData(batch);
         } catch (Exception e) {
             log.error("Ошибка в процессе записи буфера", e);
         }
