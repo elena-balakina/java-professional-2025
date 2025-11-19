@@ -3,7 +3,6 @@ package ru.otus.protobuf;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.otus.protobuf.client.ClientStreamObserver;
@@ -23,16 +22,19 @@ public class NumbersClient {
                 .build();
         log.info("numbers Client is starting...");
 
-        AtomicInteger lastValueFromServer = new AtomicInteger(0);
         CountDownLatch latch = new CountDownLatch(1);
         NumbersServiceGrpc.NumbersServiceStub asyncStub = NumbersServiceGrpc.newStub(channel);
+
         NumbersRange range =
                 NumbersRange.newBuilder().setFirstValue(0).setLastValue(30).build();
-        asyncStub.generate(range, new ClientStreamObserver(lastValueFromServer, latch));
+
+        ClientStreamObserver observer = new ClientStreamObserver(latch);
+        asyncStub.generate(range, observer);
+
         int currentValue = 0;
 
         for (int i = 0; i <= 50; i++) {
-            int serverVal = lastValueFromServer.getAndSet(0);
+            int serverVal = observer.getAndResetLastValue();
             currentValue = currentValue + serverVal + 1;
             log.info("currentValue:{}", currentValue);
             Thread.sleep(1000);

@@ -14,8 +14,7 @@ public class NumbersServer {
     public static final int SERVER_PORT = 8190;
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        Server server = ServerBuilder
-                .forPort(SERVER_PORT)
+        Server server = ServerBuilder.forPort(SERVER_PORT)
                 .addService(new NumbersServiceImpl())
                 .build();
 

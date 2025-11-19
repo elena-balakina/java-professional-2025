@@ -11,12 +11,15 @@ public class ClientStreamObserver implements StreamObserver<NumberMessage> {
 
     private static final Logger log = LoggerFactory.getLogger(ClientStreamObserver.class);
 
-    private final AtomicInteger lastValueFromServer;
     private final CountDownLatch latch;
+    private final AtomicInteger lastValueFromServer = new AtomicInteger(0);
 
-    public ClientStreamObserver(AtomicInteger lastValueFromServer, CountDownLatch latch) {
-        this.lastValueFromServer = lastValueFromServer;
+    public ClientStreamObserver(CountDownLatch latch) {
         this.latch = latch;
+    }
+
+    public int getAndResetLastValue() {
+        return lastValueFromServer.getAndSet(0);
     }
 
     @Override
