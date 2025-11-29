@@ -3,7 +3,7 @@ let stompClient = null;
 const chatLineElementId = "chatLine";
 const roomIdElementId = "roomId";
 const messageElementId = "message";
-
+const SPECIAL_ROOM_ID = "1408";
 
 const setConnected = (connected) => {
     const connectBtn = document.getElementById("connect");
@@ -13,6 +13,21 @@ const setConnected = (connected) => {
     disconnectBtn.disabled = !connected;
     const chatLine = document.getElementById(chatLineElementId);
     chatLine.hidden = !connected;
+    updateSendButtonState();
+}
+
+const updateSendButtonState = () => {
+    const roomId = document.getElementById(roomIdElementId).value;
+    const sendBtn = document.getElementById("send");
+    const messageInput = document.getElementById(messageElementId);
+    const isRoom1408 = SPECIAL_ROOM_ID === roomId;
+    sendBtn.disabled = isRoom1408;
+    messageInput.disabled = isRoom1408;
+    if (isRoom1408) {
+        messageInput.placeholder = "Message sending is not allowed in room 1408";
+    } else {
+        messageInput.placeholder = "type a message...";
+    }
 }
 
 const connect = () => {
@@ -29,6 +44,15 @@ const connect = () => {
     });
 }
 
+// Add event listener for roomId input changes
+window.addEventListener('DOMContentLoaded', () => {
+    const roomIdInput = document.getElementById(roomIdElementId);
+    if (roomIdInput) {
+        roomIdInput.addEventListener('input', updateSendButtonState);
+        roomIdInput.addEventListener('change', updateSendButtonState);
+    }
+});
+
 const disconnect = () => {
     if (stompClient !== null) {
         stompClient.disconnect();
@@ -39,6 +63,10 @@ const disconnect = () => {
 
 const sendMsg = () => {
     const roomId = document.getElementById(roomIdElementId).value;
+    if (SPECIAL_ROOM_ID === roomId) {
+        console.log("Message sending is not allowed in room 1408");
+        return;
+    }
     const message = document.getElementById(messageElementId).value;
     stompClient.send(`/app/message.${roomId}`, {}, JSON.stringify({'messageStr': message}))
 }

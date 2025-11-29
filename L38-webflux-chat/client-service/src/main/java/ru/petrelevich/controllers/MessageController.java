@@ -22,6 +22,7 @@ public class MessageController {
     private static final Logger logger = LoggerFactory.getLogger(MessageController.class);
 
     private static final String TOPIC_TEMPLATE = "/topic/response.";
+    private static final String SPECIAL_ROOM_ID = "1408";
 
     private final WebClient datastoreClient;
     private final SimpMessagingTemplate template;
@@ -34,10 +35,16 @@ public class MessageController {
     @MessageMapping("/message.{roomId}")
     public void getMessage(@DestinationVariable("roomId") String roomId, Message message) {
         logger.info("get message:{}, roomId:{}", message, roomId);
-        saveMessage(roomId, message).subscribe(msgId -> logger.info("message send id:{}", msgId));
 
-        template.convertAndSend(
-                String.format("%s%s", TOPIC_TEMPLATE, roomId), new Message(HtmlUtils.htmlEscape(message.messageStr())));
+        if (SPECIAL_ROOM_ID.equals(roomId)) {
+            logger.warn("Attempt to send message to read-only special room {}", roomId);
+            throw new ChatException("In room " + SPECIAL_ROOM_ID + " not possible to send messages");
+        }
+
+        saveMessage(roomId, message).subscribe(msgId -> logger.info("message send id:{}", msgId));
+        var messageToSend = new Message(HtmlUtils.htmlEscape(message.messageStr()));
+        template.convertAndSend(TOPIC_TEMPLATE + roomId, messageToSend);
+        template.convertAndSend(TOPIC_TEMPLATE + SPECIAL_ROOM_ID, messageToSend);
     }
 
     @EventListener

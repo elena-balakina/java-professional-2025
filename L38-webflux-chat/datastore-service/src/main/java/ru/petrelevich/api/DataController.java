@@ -18,6 +18,7 @@ import ru.petrelevich.service.DataStore;
 @RestController
 public class DataController {
     private static final Logger log = LoggerFactory.getLogger(DataController.class);
+    private static final String SPECIAL_ROOM_ID = "1408";
     private final DataStore dataStore;
     private final Scheduler workerPool;
 
@@ -28,6 +29,12 @@ public class DataController {
 
     @PostMapping(value = "/msg/{roomId}")
     public Mono<Long> messageFromChat(@PathVariable("roomId") String roomId, @RequestBody MessageDto messageDto) {
+        // Prevent saving messages in room 1408
+        if (SPECIAL_ROOM_ID.equals(roomId)) {
+            log.warn("Attempt to save message in room 1408, which is not allowed");
+            return Mono.error(new IllegalArgumentException("Message sending is not allowed in room 1408"));
+        }
+
         var messageStr = messageDto.messageStr();
 
         var msgId = Mono.just(new Message(null, roomId, messageStr))
