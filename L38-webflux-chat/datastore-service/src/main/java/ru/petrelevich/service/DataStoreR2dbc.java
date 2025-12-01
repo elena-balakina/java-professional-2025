@@ -15,7 +15,6 @@ import ru.petrelevich.repository.MessageRepository;
 @Service
 public class DataStoreR2dbc implements DataStore {
     private static final Logger log = LoggerFactory.getLogger(DataStoreR2dbc.class);
-    private static final String SPECIAL_ROOM_ID = "1408";
 
     private final MessageRepository messageRepository;
     private final Scheduler workerPool;
@@ -34,13 +33,12 @@ public class DataStoreR2dbc implements DataStore {
     @Override
     public Flux<Message> loadMessages(String roomId) {
         log.info("loadMessages roomId:{}", roomId);
+        return messageRepository.findByRoomId(roomId).delayElements(Duration.of(3, SECONDS), workerPool);
+    }
 
-        Flux<Message> source;
-        if (SPECIAL_ROOM_ID.equals(roomId)) {
-            source = messageRepository.findByRoomIdNot(SPECIAL_ROOM_ID);
-        } else {
-            source = messageRepository.findByRoomId(roomId);
-        }
-        return source.delayElements(Duration.of(3, SECONDS), workerPool);
+    @Override
+    public Flux<Message> loadAllMessages() {
+        log.info("loadAllMessages");
+        return messageRepository.findAllOrderById().delayElements(Duration.of(3, SECONDS), workerPool);
     }
 }

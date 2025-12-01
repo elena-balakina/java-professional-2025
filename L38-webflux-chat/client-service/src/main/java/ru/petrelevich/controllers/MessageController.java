@@ -38,7 +38,7 @@ public class MessageController {
 
         if (SPECIAL_ROOM_ID.equals(roomId)) {
             logger.warn("Attempt to send message to read-only special room {}", roomId);
-            throw new ChatException("In room " + SPECIAL_ROOM_ID + " not possible to send messages");
+            return;
         }
 
         saveMessage(roomId, message).subscribe(msgId -> logger.info("message send id:{}", msgId));
@@ -65,9 +65,15 @@ public class MessageController {
             return;
         }
         logger.info("subscription for:{}, roomId:{}, user:{}", simpDestination, roomId, principal.getName());
-        // /user/f6532733-51db-4d0e-bd00-1267dddc7b21/topic/response.1
-        getMessagesByRoomId(roomId)
-                .doOnError(ex -> logger.error("getting messages for roomId:{} failed", roomId, ex))
+
+        Flux<Message> history;
+        if (SPECIAL_ROOM_ID.equals(String.valueOf(roomId))) {
+            history = getAllMessages();
+        } else {
+            history = getMessagesByRoomId(roomId);
+        }
+
+        history.doOnError(ex -> logger.error("getting messages for roomId:{} failed", roomId, ex))
                 .subscribe(message -> template.convertAndSendToUser(principal.getName(), simpDestination, message));
     }
 
@@ -94,6 +100,20 @@ public class MessageController {
         return datastoreClient
                 .get()
                 .uri(String.format("/msg/%s", roomId))
+                .accept(MediaType.APPLICATION_NDJSON)
+                .exchangeToFlux(response -> {
+                    if (response.statusCode().equals(HttpStatus.OK)) {
+                        return response.bodyToFlux(Message.class);
+                    } else {
+                        return response.createException().flatMapMany(Mono::error);
+                    }
+                });
+    }
+
+    private Flux<Message> getAllMessages() {
+        return datastoreClient
+                .get()
+                .uri("/msg")
                 .accept(MediaType.APPLICATION_NDJSON)
                 .exchangeToFlux(response -> {
                     if (response.statusCode().equals(HttpStatus.OK)) {
